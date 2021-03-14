@@ -1,6 +1,5 @@
 RECON
-1. http://207.246.89.123/index.html#video-path=media/video/PE_01_00.mp4&time-offset=71
-2. https://help.offensive-security.com/hc/en-us
+
 
 PORT 80
 	1. gobuster (medium + extensions) (also RECURSIVELY)
